@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="App.fs" />
+    <Compile Include="Inputs.fs" />
+    <Compile Include="Days/Day1.fs" />
+    <Compile Include="Days/Day2.fs" />
   </ItemGroup>
 
 </Project>
