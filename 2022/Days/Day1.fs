@@ -1,7 +1,7 @@
 module Day1
 
 let elvesInventories =
-    System.IO.File.ReadAllText "./Inputs/Day1.fs"
+    System.IO.File.ReadAllText "./Inputs/Day1.txt"
     |> fun str -> str.Split "\n\n" // Get elf inventory
     |> Array.map (fun x -> x.Split "\n") // Get each item of each inventories
     |> Array.map (Array.map int) // string item -> int item
