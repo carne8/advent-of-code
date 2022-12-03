@@ -22,7 +22,8 @@ let getPointsFromRound (round: RPS * RPS) =
         | Scissors, Scissors -> draw + 3
 
 let rawRounds =
-    Inputs.day2.Split "\n" // This represent all rounds
+    System.IO.File.ReadAllText "./Inputs/Day2.fs"
+    |> fun str -> str.Split "\n" // This represent all rounds
     |> List.ofArray
     |> List.map (fun round -> [ round.[0]; round.[2] ]) // Split rounds in RPS
 
