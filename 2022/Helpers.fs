@@ -11,6 +11,7 @@ type String =
     static member split (separator: string) (str: string) = str.Split separator
 
 type List =
+    /// Returns a list that contains all elements of the original list while the given predicate returns True and the first element where the predicate returns False, and then returns no further elements.
     static member takeWhileInclusive (predicate: 'a -> bool) (list: 'a list) =
         list
         |> List.fold
