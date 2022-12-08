@@ -9,3 +9,18 @@ type String =
 
     static member splitc (separator: char) (str: string) = str.Split separator
     static member split (separator: string) (str: string) = str.Split separator
+
+type List =
+    static member takeWhileInclusive (predicate: 'a -> bool) (list: 'a list) =
+        list
+        |> List.fold
+            (fun (list, finished) element ->
+                if not finished && element |> predicate then
+                    element::list, false
+                elif not finished && element |> predicate |> not then
+                    element::list, true
+                else list, true
+            )
+            ([], false)
+        |> fst
+        |> List.rev
