@@ -18,7 +18,7 @@ type Direction =
 type Rope = (int * int) * (int * int) * (int * int)
 
 let input =
-    "./Inputs/Day9-test.txt"
+    "./Inputs/Day9.txt"
     |> System.IO.File.ReadAllLines
     |> Array.map (String.split " ")
     |> Array.map (fun x -> Direction.Parse x.[0], int x.[1])
@@ -42,26 +42,29 @@ let moveRopeTail (rope: Rope) : Rope =
     let (headX, headY), (tailX, tailY) = head, tail
     let distanceX, distanceY = headX - tailX, headY - tailY
 
-    if Math.Abs distanceX < Math.Abs distanceY then
-        (tailX + distanceX,
-         tailY + distanceY - 1)
-        |> fun newTail -> head, newTail, previousHead
-    elif Math.Abs distanceX > Math.Abs distanceY then
-        (tailX + distanceX - 1,
-         tailY + distanceY)
-        |> fun newTail -> head, newTail, previousHead
-    else head, previousHead, previousHead
+    let needToMove = Math.Abs distanceX > 1 || Math.Abs distanceY > 1
+
+    let newTail =
+        if needToMove && Math.Abs distanceX < Math.Abs distanceY then
+            if distanceY < 0 then
+                tailX + distanceX,
+                tailY + distanceY + 1
+            else
+                tailX + distanceX,
+                tailY + distanceY - 1
+        elif needToMove && Math.Abs distanceX > Math.Abs distanceY then
+            if distanceX < 0 then
+                tailX + distanceX + 1,
+                tailY + distanceY
+            else
+                tailX + distanceX - 1,
+                tailY + distanceY
+        elif needToMove then previousHead
+        else tail
+
+    head, newTail, previousHead
 
 let moveRope direction = moveRopeHead direction >> moveRopeTail
-
-// ((4, 1), (3, 0), (4, 0))
-// |> moveRopeTail
-
-// ......    ......    ......
-// ......    ......    ......
-// ...... -> ...... -> ......
-// ......    ....H.    ....H.
-// ...TH.    ...T..    ...T..
 
 let part1 =
     input
@@ -70,9 +73,8 @@ let part1 =
             let movedRope = rope |> moveRope direction
             let _, movedTail, _ = movedRope
 
-            printfn "%A -> %A to %A"
+            printfn "%A -> %A"
                 direction
-                (rope |> (fun (x, y, _) -> sprintf "Head %A, Tail %A" x y))
                 (movedRope |> (fun (x, y, _) -> sprintf "Head %A, Tail %A" x y))
             movedRope, movedTail::tailPositions
         )
