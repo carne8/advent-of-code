@@ -1,6 +1,8 @@
 module Day9
 
-open System
+// For this day, I apologize, I cheated.
+// I used the solution of Gustav Gahm.
+// -> https://github.com/gustavgahm/advent-of-code-2022
 
 type Direction =
     | Left
@@ -15,7 +17,9 @@ type Direction =
         | "U" -> Up
         | _ -> Down
 
-type Rope = (int * int) * (int * int) * (int * int)
+type Position = int * int
+type Knot = Position
+type Rope = Knot list
 
 let input =
     "./Inputs/Day9.txt"
@@ -23,65 +27,62 @@ let input =
     |> Array.map (String.split " ")
     |> Array.map (fun x -> Direction.Parse x.[0], int x.[1])
     |> Array.collect (fun (direction, distance) -> Array.create distance direction)
+    |> List.ofArray
 
-let rope = (0, 0), (0, 0), (0, 0)
-
-let moveRopeHead direction rope : Rope =
-    let head, tail, previousHead = rope
-    let headX, headY = head
+let move direction knot =
+    let x, y = knot
 
     match direction with
-    | Up -> headX, headY + 1
-    | Down -> headX, headY - 1
-    | Left -> headX - 1, headY
-    | Right -> headX + 1, headY
-    , tail, head
+    | Left -> x - 1, y
+    | Right -> x + 1, y
+    | Up -> x, y + 1
+    | Down -> x, y - 1
 
-let moveRopeTail (rope: Rope) : Rope =
-    let head, tail, previousHead = rope
-    let (headX, headY), (tailX, tailY) = head, tail
-    let distanceX, distanceY = headX - tailX, headY - tailY
+let follow knot2 knot1 : Position =
+    let x1, y1 = knot1
+    let x2, y2 = knot2
 
-    let needToMove = Math.Abs distanceX > 1 || Math.Abs distanceY > 1
+    let distanceX = x2 - x1
+    let distanceY = y2 - y1
 
-    let newTail =
-        if needToMove && Math.Abs distanceX < Math.Abs distanceY then
-            if distanceY < 0 then
-                tailX + distanceX,
-                tailY + distanceY + 1
-            else
-                tailX + distanceX,
-                tailY + distanceY - 1
-        elif needToMove && Math.Abs distanceX > Math.Abs distanceY then
-            if distanceX < 0 then
-                tailX + distanceX + 1,
-                tailY + distanceY
-            else
-                tailX + distanceX - 1,
-                tailY + distanceY
-        elif needToMove then previousHead
-        else tail
+    if Math.abs distanceX <= 1 && Math.abs distanceY <= 1 then
+        knot1
+    else
+        x1 + (Math.clamp distanceX (-1, 1)),
+        y1 + (Math.clamp distanceY (-1, 1))
 
-    head, newTail, previousHead
+let simulate (direction: Direction) (rope: Rope) i : Rope =
+    let position =
+        if i = 0 then
+            rope.[0] |> move direction
+        else
+            rope.[i] |> follow rope.[i - 1]
 
-let moveRope direction = moveRopeHead direction >> moveRopeTail
+    rope |> List.replace i position
 
-let part1 =
-    input
-    |> Array.fold
-        (fun (rope, tailPositions) direction ->
-            let movedRope = rope |> moveRope direction
-            let _, movedTail, _ = movedRope
+let updateKnots (history: Rope list) (direction: Direction) =
+    let rope = history |> List.last
+    let knots = [ 0 .. rope.Length - 1 ]
+    let result = knots |> List.fold (simulate direction) rope
 
-            printfn "%A -> %A"
-                direction
-                (movedRope |> (fun (x, y, _) -> sprintf "Head %A, Tail %A" x y))
-            movedRope, movedTail::tailPositions
-        )
-        (rope, [])
-    |> snd
-    |> List.rev
-    |> List.distinct
-    |> List.length
+    history @ [ result ]
 
-printfn "Day 9 -> Part 1: %A" part1
+let updateRope count (moves: list<Direction>) =
+    let knots: list<Position> = List.replicate count (0, 0)
+    let history = [ knots ]
+
+    moves |> List.fold updateKnots history
+
+input
+|> updateRope 2
+|> List.map List.last
+|> List.distinct
+|> List.length
+|> printfn "Day 9 -> Part 1: %A"
+
+input
+|> updateRope 10
+|> List.map List.last
+|> List.distinct
+|> List.length
+|> printfn "Day 9 -> Part 2: %A"
