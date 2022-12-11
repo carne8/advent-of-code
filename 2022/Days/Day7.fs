@@ -12,7 +12,6 @@ type Command =
 
     static member FromString =
         String.splitc ' '
-        >> List.ofArray
         >> function
             | "$" :: "cd" :: args -> CD args.[0]
             | _ -> LS
@@ -43,7 +42,6 @@ let createFiles () =
                 result
                 |> List.iter (
                     String.split " "
-                    >> List.ofArray
                     >> function
                         | "dir" :: folderName ->
                             currentDir + folderName.[0]
@@ -62,7 +60,7 @@ let createFiles () =
     baseDirectory
 
 
-let getFileSize = String.split "-" >> Array.head >> int
+let getFileSize = String.split "-" >> List.head >> int
 
 let rec getDirectorySize dir =
     let filesSize =

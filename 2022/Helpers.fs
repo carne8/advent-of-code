@@ -5,8 +5,10 @@ open System
 
 type String =
     static member fromChars(chars: #seq<char>) = chars |> Seq.toArray |> String
-    static member splitc (separator: char) (str: string) = str.Split separator
-    static member split (separator: string) (str: string) = str.Split separator
+    static member splitc (separator: char) (str: string) = str.Split separator |> Array.toList
+    static member split (separator: string) (str: string) = str.Split separator |> Array.toList
+    static member trim (str: string) = str.Trim()
+    static member substring startIndex (str: string) = str.Substring startIndex
 
 module List =
     /// Returns a list that contains all elements of the original list while the given predicate returns True and the first element where the predicate returns False, and then returns no further elements.
@@ -30,6 +32,14 @@ module List =
         |> List.mapi (fun i element ->
             if i = index then
                 newElement
+            else
+                element)
+
+    let mapOne index f list =
+        list
+        |> List.mapi (fun i element ->
+            if i = index then
+                element |> f
             else
                 element)
 
