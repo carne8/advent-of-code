@@ -72,12 +72,18 @@ let monkeys =
 
 
 module Item =
+    let mutable keepWorryLevelsManageable = true
+
     let play monkey item =
         item
         |> monkey.Operation
-        |> fun x -> (x |> float) / 3.
-        |> System.Math.Floor
-        |> int
+        |> (match keepWorryLevelsManageable with
+            | true ->
+                float
+                >> fun x -> x / 3.
+                >> System.Math.Floor
+                >> int
+            | false -> id)
 
     let getTargetMonkey monkey item =
         item
@@ -149,12 +155,29 @@ let playSeveralRounds count monkeys =
         (monkeys, List.replicate monkeys.Length 0)
 
 
-monkeys
-|> playSeveralRounds 20
-|> snd
-|> List.sortDescending
-|> List.indexed
-|> List.filter (fun (i, _) -> i < 2)
-|> List.map snd
-|> List.reduce (*)
-|> printfn "Day 11 -> Part 1: %A"
+[<EntryPoint>]
+let main _ =
+    Item.keepWorryLevelsManageable <- true
+    monkeys
+    |> playSeveralRounds 20
+    |> snd
+    |> List.sortDescending
+    |> List.indexed
+    |> List.filter (fun (i, _) -> i < 2)
+    |> List.map snd
+    |> List.reduce (*)
+    |> printfn "Day 11 -> Part 1: %A"
+
+    Item.keepWorryLevelsManageable <- false
+    monkeys
+    |> playSeveralRounds 10000
+    |> snd
+    |> List.sortDescending
+    |> List.indexed
+    |> List.filter (fun (i, _) -> i < 2)
+    |> List.map snd
+    |> List.map int64
+    |> List.reduce (*)
+    |> printfn "Day 11 -> Part 2: %A"
+
+    0
