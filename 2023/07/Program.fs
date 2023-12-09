@@ -91,7 +91,7 @@ type Hand =
             |> List.groupBy id
             |> List.map (fun (char, x) -> char, x |> List.length)
 
-        let maxChar = chars |> List.maxBy snd
+        let maxChar = chars |> List.maxBy (function 'J', _ -> 0 | _, x -> x)
 
         match maxChar |> fst = joker with
         | true -> chars |> List.map snd
