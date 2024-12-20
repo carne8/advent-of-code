@@ -16,11 +16,6 @@ module Array2D =
         with _ -> None
 
 type Pos = int * int
-module Pos =
-    /// 2D cross product of OA and OB
-    let cross o a b =
-        (fst a - fst o)*(snd b - snd o)
-        - (snd a - snd o)*(fst b - fst o)
 
 let groups input =
     let groups = new Dictionary<int, (char * List<Pos>)>()
@@ -125,113 +120,57 @@ module Group =
 
         horizontalPerimeter + verticalPerimeter
 
-    /// Same as counting face
-    let countFaces (group: #seq<Pos>) =
-        let getLineFaces useX line =
-            let getCoordinate = if useX then snd else fst
+    /// Same as counting faces
+    let countVertexes (group: #seq<Pos>) =
+        let minY = group |> Seq.minBy fst |> fst
+        let minX = group |> Seq.minBy snd |> snd
+        let groupHeight = (group |> Seq.maxBy fst |> fst) - minY + 1
+        let groupWidth = (group |> Seq.maxBy snd |> snd) - minX + 1
 
-            line
-            |> Seq.pairwise
-            |> Seq.fold
-                (fun faces (left, right) ->
-                    let xLeft, xRight =
-                        left |> getCoordinate,
-                        right |> getCoordinate
+        let grid =
+            Array2D.init groupHeight groupWidth (fun y x ->
+                group |> Seq.tryFind ((=) (y + minY, x + minX))
+            )
 
-                    match xRight - xLeft with
-                    | 1 -> faces
-                    | _ -> [xLeft+1; xRight] @ faces
-                )
-                List.empty
-            |> fun faces ->
-                [ line |> Seq.head |> getCoordinate
-                  line |> Seq.last |> getCoordinate |> (+) 1 ]
-                @ faces
+        let mutable vertexesCount = 0
 
-        let verticalFaces =
-            group
-            |> getLines
-            |> Seq.indexed
-            |> Seq.collect (fun (idx, line) ->
-                line
-                |> getLineFaces true
-                |> List.map (fun faceIdx -> idx, faceIdx)
-            ) // All face parts
-            |> Seq.groupBy snd // Group them by columnIdx
-            |> Seq.toList // TODO
-            |> Seq.collect (fun (_faceIdx, faceParts) ->
-                faceParts // Face parts that are in the same column
-                |> Seq.fold
-                    (fun faces facePart ->
-                        let faceLineIdx = facePart |> fst
-
-                        match faces |> List.tryHead with
-                        | None -> [ [ facePart ] ]
-                        | Some prevFace ->
-                            let (prevFaceLineIdx, _) = prevFace |> List.head
-                            match prevFaceLineIdx + 1 = faceLineIdx with
-                            | true -> (facePart::prevFace) :: (faces |> List.tail)
-                            | false -> [ facePart ] :: faces
+        for y in -1..(grid |> Array2D.length1) do
+            for x in -1..(grid |> Array2D.length2) do
+                let detectionBlocks =
+                    [ 0, 0 // Top left
+                      0, 1 // Top right
+                      1, 0 // Bottom left
+                      1, 1 (* Bottom right *) ]
+                    |> List.map (fun (y', x') ->
+                        grid
+                        |> Array2D.tryItem (y+y') (x+x')
+                        |> Option.bind id
+                        |> Option.isSome
                     )
-                    []
-            ) // Faces (Face parts grouped by face)
-            |> Seq.length
 
-        // let group =
-        //     getInput()
-        //     |> groups
-        //     |> fun x -> x[2]
-        //     |> snd
-        //     |> Seq.toList
+                match detectionBlocks with
+                | _ when detectionBlocks |> List.filter id |> List.length = 1 ->
+                    vertexesCount <- vertexesCount+1
+                | _ when detectionBlocks |> List.filter (id >> not) |> List.length = 1 ->
+                    vertexesCount <- vertexesCount+1
+                | [ true; false; false; true ]
+                | [ false; true; true; false ] -> vertexesCount <- vertexesCount+2
+                | _ -> ()
 
-        let horizontalFaces =
-            group
-            |> getColumns
-            |> Seq.indexed
-            |> Seq.collect (fun (idx, line) ->
-                line
-                |> getLineFaces false
-                |> List.map (fun faceIdx -> idx, faceIdx)
-            ) // All face parts
-            |> Seq.groupBy snd // Group them by columnIdx
-            |> Seq.collect (fun (_faceIdx, faceParts) ->
-                faceParts // Face parts that are in the same column
-                |> Seq.fold
-                    (fun faces facePart ->
-                        let faceLineIdx = facePart |> fst
+        vertexesCount
 
-                        match faces |> List.tryHead with
-                        | None -> [ [ facePart ] ]
-                        | Some prevFace ->
-                            let (prevFaceLineIdx, _) = prevFace |> List.head
-                            match prevFaceLineIdx + 1 = faceLineIdx with
-                            | true -> (facePart::prevFace) :: (faces |> List.tail)
-                            | false -> [ facePart ] :: faces
-                    )
-                    []
-            ) // Faces (Face parts grouped by face)
-            |> Seq.length
-
-        verticalFaces + horizontalFaces
-
-let partOne =
-    let getGroupPrice group = (group |> Seq.length) * (group |> Group.calculatePerimeter)
+let partOne () =
+    let getGroupPrice group = // Area * Perimeter
+        (group |> Seq.length) * (group |> Group.calculatePerimeter)
 
     getInput ()
     |> groups
     |> Seq.sumBy (_.Value >> snd >> getGroupPrice)
 
-let partTwo = // Does not work...
-    let getGroupPrice group = (group |> Seq.length) * (group |> Group.countFaces)
+let partTwo () =
+    let getGroupPrice group = // Area * Faces count
+        (group |> Seq.length) * (group |> Group.countVertexes)
 
     getInput ()
     |> groups
-    // |> Seq.map (fun group ->
-    //     group.Value |> fst,
-    //     group.Value
-    //     |> snd
-    //     |> getGroupPrice
-    // )
-    // |> Seq.iter (fun (x, y) -> printfn "%c -> %i" x y)
     |> Seq.sumBy (_.Value >> snd >> getGroupPrice)
-

@@ -177,5 +177,3 @@ let partTwoBis () =
         foundTree
         |> visualize bathroomSize
         |> printfn "%s"
-
-
