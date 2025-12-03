@@ -1,4 +1,6 @@
-﻿open System.IO
+﻿module AOC._2025.Day01
+
+open System.IO
 
 /// Euclidean remainder, the proper modulo operation
 let inline (%!) a b = (a % b + b) % b
@@ -13,7 +15,7 @@ let input =
         | _ -> failwithf "Invalid input: %A" s
     )
 
-let day1 () =
+let partOne () =
     input |> Array.fold
         (fun (state, zeroCount) instruction ->
             let newState = (state + instruction) %! 100
@@ -23,7 +25,7 @@ let day1 () =
         )
         (50, 0)
 
-let day2 () =
+let partTwo () =
     input |> Array.fold
         (fun (state, zeroCount) instruction ->
             let mutable zeros = zeroCount
